@@ -2,20 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
-public class PlayerController : MonoBehaviour
+public class SpawnManager : MonoBehaviour
 {
     [SerializeField] GameObject player;
     [SerializeField] GameObject playerClone;
     [SerializeField] float radius = 1.0f;
-    public List<GameObject> cloneList;
-
-
-    private void Start()
-    {
-        InvokeRepeating("ScaleAnimation", 0f, 1f);
-    }
+    [SerializeField] List<GameObject> cloneList;
+    [SerializeField] int score = 0;
 
 
     private void OnTriggerExit(Collider other)
@@ -28,13 +22,25 @@ public class PlayerController : MonoBehaviour
 
                 CreateClonesAroundPoint(gateController.gateNumber, transform.position, radius);
                 radius = radius + 0.5f;
+                score += gateController.gateNumber;
             }
-            else
+            else if (gateController.gateNumber < 0)
             {
                 for (int i = 0; i > gateController.gateNumber; i--)
                 {
-                    Destroy(cloneList[cloneList.Count - 1].gameObject);
-                    cloneList.RemoveAt(cloneList.Count - 1);
+                    score--;
+
+                    if (score > -1)
+                    {
+                        Destroy(cloneList[cloneList.Count - 1].gameObject);
+                        cloneList.RemoveAt(cloneList.Count - 1);
+                    }
+                    else
+                    {
+                        Debug.Log("Game Over");
+                        break;
+                    }
+
                     if (radius >= 1.5f)
                     {
                         radius = radius - 0.5f;
@@ -60,7 +66,7 @@ public class PlayerController : MonoBehaviour
             var vertical = Mathf.Sin(radians);
             var horizontal = Mathf.Cos(radians);
 
-            var spawnDir = new Vector3(horizontal, 0, vertical);
+            var spawnDir = new Vector3(vertical, horizontal, 0);
 
             /* Get the spawn position */
             var spawnPos = point + spawnDir * radius; // Radius is just the distance away from the point
@@ -73,15 +79,13 @@ public class PlayerController : MonoBehaviour
             clone.transform.parent = player.transform;
 
             /* Rotate the enemy to face towards player */
-            clone.transform.LookAt(point);
+            //clone.transform.LookAt(point);
+
+            /* Random colors */
+            clone.GetComponent<MeshRenderer>().material.color = ColorList.colors[Random.Range(0, 12)];
 
             /* Adjust height */
             //clone.transform.Translate(new Vector3(0, clone.transform.localScale.y / 2, 0));
         }
-    }
-
-    private void ScaleAnimation()
-    {
-        transform.DOScale(2, 0.5f).OnComplete(() => transform.DOScale(1, 0.5f));
     }
 }
